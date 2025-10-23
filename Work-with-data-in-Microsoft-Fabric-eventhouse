@@ -1,0 +1,168 @@
+//***********************************************************************************************************
+// Here are two articles to help you get started with KQL:
+// KQL reference guide - https://aka.ms/KQLguide
+// SQL - KQL conversions - https://aka.ms/sqlcheatsheet
+//***********************************************************************************************************
+
+// Use "take" to view a sample number of records in the table and check the data.
+YOUR_TABLE_HERE
+| take 100
+
+// See how many records are in the table.
+YOUR_TABLE_HERE
+| count
+
+// This query returns the number of ingestions per hour in the given table.
+YOUR_TABLE_HERE
+| summarize IngestionCount = count() by bin(ingestion_time(), 1h)
+
+
+Retrieve data from a table with KQL
+Select the query code and run it to return 100 rows from the table.
+
+Bikestream
+| take 100
+
+
+// Use 'project' and 'take' to view a sample number of records in the table and check the data.
+Bikestream
+| project Street, No_Bikes
+| take 10
+
+
+Bikestream 
+| project Street, "Number of Empty Docks"
+| take 10
+
+Another common practice in the analysis is renaming columns in our queryset to make them more user-friendly.
+
+
+Bikestream 
+| project Street, ["Number of Empty Docks"] = No_Empty_Docks
+| take 10
+
+Summarize data by using KQL
+
+to see how many bikes are available in total
+
+Bikestream
+| summarize ["Total Number of Bikes"] = sum(No_Bikes)
+
+ to group the number of bikes by neighbourhood to determine the amount of available bikes in each neighbourhood
+ 
+Bikestream
+| summarize ["Total Number of Bikes"] = sum(No_Bikes) by Neighbourhood
+| project Neighbourhood, ["Total Number of Bikes"]
+
+Modify the query as shown here to use the case function along with the isempty and isnull functions to group all trips for which the neighbourhood is unknown into a Unidentified category for follow-up.
+
+Bikestream
+| summarize ["Total Number of Bikes"] = sum(No_Bikes) by Neighbourhood
+| project Neighbourhood = case(isempty(Neighbourhood) or isnull(Neighbourhood), "Unidentified", Neighbourhood), ["Total Number of Bikes"]
+
+
+Sort data by using KQL
+To make more sense of our data, we typically order it by a column, and this process is done in KQL with either a sort by or order by operator (they act the same way).
+
+Bikestream
+| summarize ["Total Number of Bikes"] = sum(No_Bikes) by Neighbourhood
+| project Neighbourhood = case(isempty(Neighbourhood) or isnull(Neighbourhood), "Unidentified", Neighbourhood), ["Total Number of Bikes"]
+| sort by Neighbourhood asc 
+
+Modify the query as follows and run it again, and note that the order by operator works the same way as sort by:
+
+Bikestream
+| summarize ["Total Number of Bikes"] = sum(No_Bikes) by Neighbourhood
+| project Neighbourhood = case(isempty(Neighbourhood) or isnull(Neighbourhood), "Unidentified", Neighbourhood), ["Total Number of Bikes"]
+| order by Neighbourhood asc
+
+Filter data by using KQL
+
+In KQL, the where clause is used to filter data. You can combine conditions in a where clause by using and and or logical operators.
+
+Run the following query to filter the bike data to include only bike points in the Chelsea neighbourhood:
+
+Bikestream
+| where Neighbourhood == "Chelsea"
+| summarize ["Total Number of Bikes"] = sum(No_Bikes) by Neighbourhood
+| project Neighbourhood = case(isempty(Neighbourhood) or isnull(Neighbourhood), "Unidentified", Neighbourhood), ["Total Number of Bikes"]
+| sort by Neighbourhood asc
+
+
+
+
+Query data by using Transact-SQL
+
+Retrieve data from a table by using Transact-SQL
+
+In your queryset, add and run the following Transact-SQL query:
+
+SELECT TOP 100 * from Bikestream
+
+Modify the query as follows to retrieve specific columns
+
+
+SELECT TOP 10 Street, No_Bikes
+FROM Bikestream
+
+Modify the query to assign an alias that renames No_Empty_Docks to a more user-friendly name.
+
+SELECT TOP 10 Street, No_Empty_Docks as [Number of Empty Docks]
+from Bikestream
+
+Summarize data by using Transact-SQL
+Run the following query to find the total number of bikes available:
+
+
+SELECT sum(No_Bikes) AS [Total Number of Bikes]
+FROM Bikestream
+
+Modify the query to group the total number of bikes by neighbourhood:
+
+Modify the query further to use a CASE statement to group bike points with an unknown origin into a Unidentified category for follow-up.
+
+SELECT Neighbourhood, Sum(No_Bikes) AS [Total Number of Bikes]
+FROM Bikestream
+GROUP BY Neighbourhood
+
+SELECT CASE
+         WHEN Neighbourhood IS NULL OR Neighbourhood = '' THEN 'Unidentified'
+         ELSE Neighbourhood
+       END AS Neighbourhood,
+       SUM(No_Bikes) AS [Total Number of Bikes]
+FROM Bikestream
+GROUP BY CASE
+           WHEN Neighbourhood IS NULL OR Neighbourhood = '' THEN 'Unidentified'
+           ELSE Neighbourhood
+         END;
+
+Sort data by using Transact-SQL
+Run the following query to order the grouped results by neighbourhood
+
+SELECT CASE
+         WHEN Neighbourhood IS NULL OR Neighbourhood = '' THEN 'Unidentified'
+         ELSE Neighbourhood
+       END AS Neighbourhood,
+       SUM(No_Bikes) AS [Total Number of Bikes]
+FROM Bikestream
+GROUP BY CASE
+           WHEN Neighbourhood IS NULL OR Neighbourhood = '' THEN 'Unidentified'
+           ELSE Neighbourhood
+         END
+ORDER BY Neighbourhood ASC;
+
+Filter data by using Transact-SQL
+Run the following query to filter the grouped data so that only rows having a neighbourhood of "Chelsea" are included in the results
+
+SELECT CASE
+         WHEN Neighbourhood IS NULL OR Neighbourhood = '' THEN 'Unidentified'
+         ELSE Neighbourhood
+       END AS Neighbourhood,
+       SUM(No_Bikes) AS [Total Number of Bikes]
+FROM Bikestream
+GROUP BY CASE
+           WHEN Neighbourhood IS NULL OR Neighbourhood = '' THEN 'Unidentified'
+           ELSE Neighbourhood
+         END
+HAVING Neighbourhood = 'Chelsea'
+ORDER BY Neighbourhood ASC;
